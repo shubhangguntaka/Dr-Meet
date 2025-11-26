@@ -1,10 +1,12 @@
-import { StyleSheet, Text, View, TouchableOpacity, Image, ScrollView } from 'react-native'
-import React from 'react'
+import { StyleSheet, Text, View, TouchableOpacity, Image, ScrollView, Alert } from 'react-native'
+import React, { useEffect, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { RootStackParamList } from '../../../navigation/CustomerAppNavigator'
+import { AppointmentsService } from '../../../services/appointments'
+import { useAuth } from '../../../authentication/AuthContext'
 
 type BookedScreenRouteProp = RouteProp<RootStackParamList, 'Booked'>
 type BookedScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Booked'>
@@ -12,10 +14,83 @@ type BookedScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 
 const BookedScreen = () => {
   const route = useRoute<BookedScreenRouteProp>()
   const navigation = useNavigation<BookedScreenNavigationProp>()
-  const { doctor, appointmentDate, appointmentTime, consultationType, price } = route.params
+  const { user } = useAuth()
+  const { 
+    doctor, 
+    appointmentDate, 
+    appointmentTime, 
+    consultationType, 
+    price,
+    concern,
+    severity,
+    duration,
+    durationType,
+    gender,
+    age,
+    height,
+    weight
+  } = route.params
 
+  const [appointmentId, setAppointmentId] = useState<string | null>(null)
   const consultationFee = 50 // Fixed consultation fee
   const currentWalletBalance = 660 // This should come from user context/state
+
+  useEffect(() => {
+    // Save appointment when screen loads
+    saveAppointment()
+  }, [])
+
+  const saveAppointment = async () => {
+    try {
+      if (!user) return
+
+      const appointment = await AppointmentsService.saveAppointment({
+        doctorId: doctor.id,
+        doctorName: doctor.name,
+        patientName: user.name,
+        patientId: user.id,
+        concern,
+        severity,
+        duration,
+        durationType,
+        date: appointmentDate,
+        time: appointmentTime,
+        consultationType: consultationType as 'phone' | 'video',
+        price,
+        paymentStatus: 'pending', // Initially pending until payment
+        gender,
+        age,
+        height,
+        weight,
+      })
+
+      setAppointmentId(appointment.id)
+    } catch (error) {
+      console.error('Error saving appointment:', error)
+      Alert.alert('Error', 'Failed to save appointment')
+    }
+  }
+
+  const handlePayment = async () => {
+    try {
+      if (!appointmentId) {
+        Alert.alert('Error', 'Appointment not found')
+        return
+      }
+
+      // Update payment status to paid
+      await AppointmentsService.updatePaymentStatus(appointmentId, 'paid')
+
+      Alert.alert(
+        'Payment Successful',
+        'Your payment has been processed successfully!',
+        [{ text: 'OK', onPress: () => navigation.navigate('MainTabs') }]
+      )
+    } catch (error) {
+      console.error('Error processing payment:', error)
+      Alert.alert('Error', 'Payment failed. Please try again.')
+    }
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -76,10 +151,7 @@ const BookedScreen = () => {
           {/* Make Payment Button */}
           <TouchableOpacity 
             style={styles.paymentButton}
-            onPress={() => {
-              // Handle payment logic here
-              navigation.navigate('MainTabs')
-            }}
+            onPress={handlePayment}
           >
             <Text style={styles.paymentButtonText}>Make payment</Text>
           </TouchableOpacity>

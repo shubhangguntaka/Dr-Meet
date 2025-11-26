@@ -5,12 +5,14 @@ import { ActivityIndicator, View, StyleSheet } from "react-native";
 import { useAuth } from "../authentication/AuthContext";
 import { LoginScreen } from "../authentication/LoginScreen";
 import { SignupScreen } from "../authentication/SignupScreen";
+import { TestSetupScreen } from "../screens/TestSetup/TestSetupScreen";
 import CustomerAppNavigator from "./CustomerAppNavigator";
 import DoctorAppNavigator from "./DoctorAppNavigator";
 
 export type AuthStackParamList = {
   Login: undefined;
   Signup: undefined;
+  TestSetup: undefined;
 };
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
@@ -20,6 +22,11 @@ function AuthNavigator() {
     <AuthStack.Navigator screenOptions={{ headerShown: false }}>
       <AuthStack.Screen name="Login" component={LoginScreen} />
       <AuthStack.Screen name="Signup" component={SignupScreen} />
+      <AuthStack.Screen 
+        name="TestSetup" 
+        component={TestSetupScreen}
+        options={{ headerShown: false }}
+      />
     </AuthStack.Navigator>
   );
 }

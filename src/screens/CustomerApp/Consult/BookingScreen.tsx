@@ -131,13 +131,21 @@ const BookingScreen = () => {
     if (currentStep < 5) {
       setCurrentStep(currentStep + 1)
     } else {
-      // Navigate to BookedScreen
+      // Navigate to BookedScreen with all booking details
       navigation.navigate('Booked', {
         doctor,
         appointmentDate: formatFullDate(selectedDate!),
         appointmentTime: selectedTime!,
         consultationType,
-        price
+        price,
+        concern,
+        severity: getSeverityLabel(),
+        duration,
+        durationType,
+        gender,
+        age,
+        height,
+        weight
       })
     }
   }

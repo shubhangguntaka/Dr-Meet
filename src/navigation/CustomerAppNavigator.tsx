@@ -21,7 +21,21 @@ export type RootStackParamList = {
   DoctorsList: { concernName: string };
   Schedule: { doctor: any };
   Booking: { doctor: any; consultationType: string; price: number };
-  Booked: { doctor: any; appointmentDate: string; appointmentTime: string; consultationType: string; price: number };
+  Booked: { 
+    doctor: any; 
+    appointmentDate: string; 
+    appointmentTime: string; 
+    consultationType: string; 
+    price: number;
+    concern: string;
+    severity: string;
+    duration: string;
+    durationType: string;
+    gender: string;
+    age: string;
+    height: string;
+    weight: string;
+  };
 };
 
 export type MainTabParamList = {
