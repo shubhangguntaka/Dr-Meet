@@ -1,20 +1,20 @@
 import { StyleSheet, Text, View } from 'react-native'
 import React from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { AppHeader } from '../../components/AppHeader'
+import { AppHeader } from '../../../components/AppHeader'
 
-const HomeScreen = () => {
+const AppointmentScreen = () => {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <AppHeader />
       <View style={styles.content}>
-        <Text>HomeScreen</Text>
+        <Text>AppointmentScreen</Text>
       </View>
     </SafeAreaView >
   )
 }
 
-export default HomeScreen
+export default AppointmentScreen
 
 const styles = StyleSheet.create({
   container: {

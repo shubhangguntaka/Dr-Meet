@@ -2,7 +2,7 @@ import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert } from 'rea
 import React from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../../authentication/AuthContext';
+import { useAuth } from '../../../authentication/AuthContext';
 
 interface ProfileScreenProps {
   navigation?: any;

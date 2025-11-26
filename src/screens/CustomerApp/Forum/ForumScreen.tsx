@@ -1,20 +1,20 @@
 import { StyleSheet, Text, View } from 'react-native'
 import React from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { AppHeader } from '../../components/AppHeader'
+import { AppHeader } from '../../../components/AppHeader'
 
-const ShopScreen = () => {
+const ForumScreen = () => {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <AppHeader />
       <View style={styles.content}>
-        <Text>ShopScreen</Text>
+        <Text>ForumScreen</Text>
       </View>
     </SafeAreaView >
   )
 }
 
-export default ShopScreen
+export default ForumScreen
 
 const styles = StyleSheet.create({
   container: {

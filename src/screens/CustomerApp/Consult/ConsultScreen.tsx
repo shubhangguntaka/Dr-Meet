@@ -2,7 +2,12 @@ import { StyleSheet, Text, View, ScrollView, TouchableOpacity } from 'react-nati
 import React from 'react';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AppHeader } from '../../components/AppHeader';
+import { AppHeader } from '../../../components/AppHeader';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../../../navigation/CustomerAppNavigator';
+
+type ConsultScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'MainTabs'>;
 
 interface Concern {
   id: string;
@@ -16,18 +21,22 @@ const concerns: Concern[] = [
   { id: '2', name: 'Anxiety', icon: 'chatbubble-ellipses-outline', iconSet: 'Ionicons' },
   { id: '3', name: 'Obesity', icon: 'person-outline', iconSet: 'Ionicons' },
   { id: '4', name: 'Diabetes', icon: 'water-outline', iconSet: 'Ionicons' },
-  { id: '5', name: 'Obesity', icon: 'person-outline', iconSet: 'Ionicons' },
-  { id: '6', name: 'Hypertension', icon: 'heart-pulse', iconSet: 'MaterialCommunityIcons' },
-  { id: '7', name: 'Rubella', icon: 'medical-outline', iconSet: 'Ionicons' },
-  { id: '8', name: 'Hypothermia', icon: 'thermometer-outline', iconSet: 'Ionicons' },
-  { id: '9', name: 'Frostbite', icon: 'snow-outline', iconSet: 'Ionicons' },
-  { id: '10', name: 'Diabetes', icon: 'water-outline', iconSet: 'Ionicons' },
-  { id: '11', name: 'Anxiety', icon: 'fitness-outline', iconSet: 'Ionicons' },
-  { id: '12', name: 'Joint Pain', icon: 'hand-left-outline', iconSet: 'Ionicons' },
+  { id: '5', name: 'Sex', icon: 'person-outline', iconSet: 'Ionicons' },
+  { id: '6', name: 'Rubella', icon: 'medical-outline', iconSet: 'Ionicons' },
+  { id: '7', name: 'Hypothermia', icon: 'thermometer-outline', iconSet: 'Ionicons' },
+  { id: '8', name: 'Frostbite', icon: 'snow-outline', iconSet: 'Ionicons' },
+  { id: '9', name: 'Anxiety', icon: 'fitness-outline', iconSet: 'Ionicons' },
+  { id: '10', name: 'Joint Pain', icon: 'hand-left-outline', iconSet: 'Ionicons' },
 ];
 
 const ConsultScreen = () => {
+  const navigation = useNavigation<ConsultScreenNavigationProp>();
   const [selectedConcern, setSelectedConcern] = React.useState<string | null>(null);
+
+  const handleConcernPress = (concern: Concern) => {
+    setSelectedConcern(concern.id);
+    navigation.navigate('DoctorsList', { concernName: concern.name });
+  };
 
   const renderIcon = (concern: Concern, size: number, color: string) => {
     if (concern.iconSet === 'MaterialCommunityIcons') {
@@ -52,7 +61,7 @@ const ConsultScreen = () => {
                 styles.concernItem,
                 selectedConcern === concern.id && styles.concernItemSelected,
               ]}
-              onPress={() => setSelectedConcern(concern.id)}
+              onPress={() => handleConcernPress(concern)}
             >
               <View style={styles.iconContainer}>
                 {renderIcon(concern, 32, '#3A643B')}

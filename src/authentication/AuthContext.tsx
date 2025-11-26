@@ -7,6 +7,7 @@ interface AuthContextType extends AuthState {
   login: (credentials: LoginCredentials) => Promise<{ success: boolean; message: string }>;
   signup: (data: SignupData) => Promise<{ success: boolean; message: string }>;
   logout: () => Promise<void>;
+  clearAllData: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -38,6 +39,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const checkCurrentUser = async () => {
     try {
       const user = await StorageService.getCurrentUser();
+      
       if (user) {
         setAuthState({
           user,
@@ -52,6 +54,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         });
       }
     } catch (error) {
+      console.error('Error checking current user:', error);
       setAuthState({
         user: null,
         isLoading: false,
@@ -70,6 +73,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (user) {
         await StorageService.saveCurrentUser(user);
+        
         setAuthState({
           user,
           isLoading: false,
@@ -80,6 +84,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return { success: false, message: 'Invalid email, password, or role' };
       }
     } catch (error) {
+      console.error('Login error:', error);
       return { success: false, message: 'Login failed. Please try again.' };
     }
   };
@@ -114,6 +119,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const clearAllData = async () => {
+    try {
+      await StorageService.clearAll();
+      setAuthState({
+        user: null,
+        isLoading: false,
+        isAuthenticated: false,
+      });
+    } catch (error) {
+      console.error('Clear data error:', error);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -121,6 +139,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         login,
         signup,
         logout,
+        clearAllData,
       }}
     >
       {children}
