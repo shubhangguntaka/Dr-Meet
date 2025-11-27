@@ -1,7 +1,7 @@
 // src/authentication/AuthContext.tsx
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { AuthState, User, LoginCredentials, SignupData } from './types';
-import { StorageService } from './storage';
+import { ActiveStorageService } from '../services/storageAdapter';
 
 interface AuthContextType extends AuthState {
   login: (credentials: LoginCredentials) => Promise<{ success: boolean; message: string }>;
@@ -38,7 +38,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const checkCurrentUser = async () => {
     try {
-      const user = await StorageService.getCurrentUser();
+      const user = await ActiveStorageService.getCurrentUser();
       
       if (user) {
         setAuthState({
@@ -65,14 +65,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (credentials: LoginCredentials): Promise<{ success: boolean; message: string }> => {
     try {
-      const user = await StorageService.verifyLogin(
+      const user = await ActiveStorageService.verifyLogin(
         credentials.email,
         credentials.password,
         credentials.role
       );
 
       if (user) {
-        await StorageService.saveCurrentUser(user);
+        await ActiveStorageService.saveCurrentUser(user);
         
         setAuthState({
           user,
@@ -91,8 +91,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const signup = async (data: SignupData): Promise<{ success: boolean; message: string }> => {
     try {
-      const newUser = await StorageService.saveUser(data);
-      await StorageService.saveCurrentUser(newUser);
+      const newUser = await ActiveStorageService.saveUser(data);
+      await ActiveStorageService.saveCurrentUser(newUser);
       
       setAuthState({
         user: newUser,
@@ -108,7 +108,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async () => {
     try {
-      await StorageService.logout();
+      await ActiveStorageService.logout();
       setAuthState({
         user: null,
         isLoading: false,
@@ -121,7 +121,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const clearAllData = async () => {
     try {
-      await StorageService.clearAll();
+      await ActiveStorageService.clearAll();
       setAuthState({
         user: null,
         isLoading: false,

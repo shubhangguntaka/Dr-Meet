@@ -1,35 +1,77 @@
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Modal, Alert } from 'react-native'
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Modal, Alert, TextInput } from 'react-native'
 import React, { useState, useEffect } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { AppHeader } from '../../../components/AppHeader'
-import { AppointmentsService, Appointment } from '../../../services/appointments'
+import { ActiveAppointmentsService } from '../../../services/storageAdapter'
 import { useAuth } from '../../../authentication/AuthContext'
+
+interface Appointment {
+  id: string;
+  doctorId: string;
+  doctorName: string;
+  patientName: string;
+  patientId: string;
+  concern: string;
+  severity: string;
+  duration: number | string;
+  durationType: string;
+  date: string;
+  time: string;
+  consultationType: 'phone' | 'video';
+  price: number;
+  paymentStatus: 'paid' | 'pending';
+  status: 'booked' | 'completed' | 'cancelled';
+  gender?: string;
+  age?: number | string;
+  height?: number | string;
+  weight?: number | string;
+  createdAt?: string;
+  updatedAt?: string;
+}
 
 const AppointmentScreen = () => {
   const { user } = useAuth()
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [filteredAppointments, setFilteredAppointments] = useState<Appointment[]>([])
   const [showFilterModal, setShowFilterModal] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
   
-  // Filter states
+  // Search and Filter states
+  const [searchQuery, setSearchQuery] = useState('')
   const [filterDate, setFilterDate] = useState<string>('')
   const [filterConsultationType, setFilterConsultationType] = useState<'phone' | 'video' | 'all'>('all')
   const [filterPaymentStatus, setFilterPaymentStatus] = useState<'paid' | 'pending' | 'all'>('all')
 
   useEffect(() => {
     loadAppointments()
+    
+    // Subscribe to real-time updates (only works with Supabase)
+    if (user) {
+      const subscription = ActiveAppointmentsService.subscribeToAppointments(
+        user.id,
+        (updatedAppointments: Appointment[]) => {
+          console.log('📡 Real-time update received:', updatedAppointments.length, 'appointments')
+          setAppointments(updatedAppointments)
+        }
+      )
+
+      // Cleanup subscription on unmount
+      return () => {
+        ActiveAppointmentsService.unsubscribe(subscription)
+      }
+    }
   }, [user])
 
   useEffect(() => {
     applyFilters()
-  }, [appointments, filterDate, filterConsultationType, filterPaymentStatus])
+  }, [appointments, searchQuery, filterDate, filterConsultationType, filterPaymentStatus])
 
   const loadAppointments = async () => {
     if (!user) return
 
     try {
-      const data = await AppointmentsService.getAppointmentsByDoctor(user.id)
+      const data = await ActiveAppointmentsService.getAppointmentsByDoctor(user.id)
       setAppointments(data)
     } catch (error) {
       console.error('Error loading appointments:', error)
@@ -38,6 +80,15 @@ const AppointmentScreen = () => {
 
   const applyFilters = () => {
     let filtered = [...appointments]
+
+    // Filter by search query (patient name or concern)
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase()
+      filtered = filtered.filter(a => 
+        a.patientName.toLowerCase().includes(query) ||
+        a.concern.toLowerCase().includes(query)
+      )
+    }
 
     // Filter by date
     if (filterDate) {
@@ -61,6 +112,13 @@ const AppointmentScreen = () => {
     setFilterDate('')
     setFilterConsultationType('all')
     setFilterPaymentStatus('all')
+    setShowFilterModal(false)
+  }
+
+  const handleRefresh = async () => {
+    setRefreshing(true)
+    await loadAppointments()
+    setRefreshing(false)
   }
 
   const handleStartCall = (appointmentId: string) => {
@@ -78,7 +136,7 @@ const AppointmentScreen = () => {
           text: 'Yes',
           onPress: async () => {
             try {
-              await AppointmentsService.updateAppointmentStatus(appointmentId, 'cancelled')
+              await ActiveAppointmentsService.updateAppointmentStatus(appointmentId, 'cancelled')
               loadAppointments()
               Alert.alert('Success', 'Appointment cancelled successfully')
             } catch (error) {
@@ -102,13 +160,41 @@ const AppointmentScreen = () => {
     <SafeAreaView style={styles.container} edges={['top']}>
       <AppHeader />
       
-      <View>
-        <TouchableOpacity 
-          style={styles.filterButton}
-          onPress={() => setShowFilterModal(true)}
-        >
-          <Ionicons name="filter" size={20} color="#3A643B" />
-        </TouchableOpacity>
+      {/* Search Bar with Action Buttons */}
+      <View style={styles.searchContainer}>
+        <View style={styles.searchBar}>
+          <Ionicons name="search" size={20} color="#9CA3AF" />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search by patient name or concern..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholderTextColor="#9CA3AF"
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <Ionicons name="close-circle" size={20} color="#9CA3AF" />
+            </TouchableOpacity>
+          )}
+        </View>
+        
+        {/* Action Buttons */}
+        <View style={styles.iconButtonsGroup}>
+          <TouchableOpacity 
+            style={styles.iconButton}
+            onPress={handleRefresh}
+            disabled={refreshing}
+          >
+            <Ionicons name="refresh" size={22} color={refreshing ? "#9CA3AF" : "#3A643B"} />
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.iconButton}
+            onPress={() => setShowFilterModal(true)}
+          >
+            <Ionicons name="filter" size={22} color="#3A643B" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -299,8 +385,84 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
   },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 12,
+    gap: 12,
+  },
+  searchBar: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: '#1F2937',
+  },
+  iconButtonsGroup: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  iconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionButtonsRow: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 12,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  refreshButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1,
+    borderColor: '#3A643B',
+    gap: 6,
+  },
+  refreshButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#3A643B',
+  },
   filterButton: {
-    left: 300,
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#3A643B',
+    gap: 6,
+  },
+  filterButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#3A643B',
   },
   scrollView: {
     flex: 1,

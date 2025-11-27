@@ -6,7 +6,7 @@
  */
 
 // 👇 SET THIS TO TRUE AFTER SUPABASE SETUP
-const USE_SUPABASE = false;
+const USE_SUPABASE = true;
 
 // Import both storage services
 import { StorageService } from '../authentication/storage';

@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { RootStackParamList } from '../../../navigation/CustomerAppNavigator'
-import { AppointmentsService } from '../../../services/appointments'
+import { ActiveAppointmentsService } from '../../../services/storageAdapter'
 import { useAuth } from '../../../authentication/AuthContext'
 
 type BookedScreenRouteProp = RouteProp<RootStackParamList, 'Booked'>
@@ -44,25 +44,28 @@ const BookedScreen = () => {
     try {
       if (!user) return
 
-      const appointment = await AppointmentsService.saveAppointment({
+      const appointmentData: any = {
         doctorId: doctor.id,
         doctorName: doctor.name,
         patientName: user.name,
         patientId: user.id,
         concern,
         severity,
-        duration,
+        duration: parseInt(duration) || 0,
         durationType,
         date: appointmentDate,
         time: appointmentTime,
         consultationType: consultationType as 'phone' | 'video',
         price,
-        paymentStatus: 'pending', // Initially pending until payment
+        paymentStatus: 'pending' as const,
+        status: 'booked' as const,
         gender,
-        age,
-        height,
-        weight,
-      })
+        age: parseInt(age) || 0,
+        height: parseFloat(height) || 0,
+        weight: parseFloat(weight) || 0,
+      }
+
+      const appointment = await ActiveAppointmentsService.saveAppointment(appointmentData)
 
       setAppointmentId(appointment.id)
     } catch (error) {
@@ -79,7 +82,7 @@ const BookedScreen = () => {
       }
 
       // Update payment status to paid
-      await AppointmentsService.updatePaymentStatus(appointmentId, 'paid')
+      await ActiveAppointmentsService.updatePaymentStatus(appointmentId, 'paid')
 
       Alert.alert(
         'Payment Successful',

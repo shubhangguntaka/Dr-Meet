@@ -172,15 +172,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
             <Text style={styles.signupLink}>Sign Up</Text>
           </TouchableOpacity>
         </View>
-
-        {/* Test Setup Button */}
-        <TouchableOpacity
-          style={styles.testSetupButton}
-          onPress={() => navigation.navigate('TestSetup')}
-        >
-          <Ionicons name="flask" size={20} color="#3A643B" />
-          <Text style={styles.testSetupText}>Multi-Device Test Setup</Text>
-        </TouchableOpacity>
       </View>
       </ScrollView>
     </SafeAreaView>
@@ -349,22 +340,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#3A643B',
     fontWeight: '600',
-  },
-  testSetupButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 12,
-    borderRadius: 8,
-    backgroundColor: '#F3F4F6',
-    marginTop: 16,
-    gap: 8,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  testSetupText: {
-    fontSize: 13,
-    color: '#3A643B',
-    fontWeight: '500',
   },
 });

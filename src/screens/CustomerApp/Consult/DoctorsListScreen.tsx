@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { RootStackParamList } from '../../../navigation/CustomerAppNavigator'
-import { StorageService } from '../../../authentication/storage'
+import { ActiveStorageService } from '../../../services/storageAdapter'
 import { User } from '../../../authentication/types'
 
 type DoctorsListScreenRouteProp = RouteProp<RootStackParamList, 'DoctorsList'>
@@ -36,10 +36,8 @@ const DoctorsListScreen = () => {
   const loadDoctors = async () => {
     try {
       setLoading(true)
-      // Initialize fake doctors if they don't exist
-      await StorageService.initializeDoctorUsers()
-      // Load ALL doctors first, then filter them
-      const allDoctors = await StorageService.getAllDoctors()
+      // Load ALL doctors
+      const allDoctors = await ActiveStorageService.getAllDoctors()
       setDoctors(allDoctors)
     } catch (error) {
       console.error('Error loading doctors:', error)
@@ -289,7 +287,7 @@ const DoctorsListScreen = () => {
               <TouchableOpacity 
                 style={[styles.modalUtilityButton, styles.modalUtilityButtonDanger]}
                 onPress={async () => {
-                  await StorageService.clearAll()
+                  await ActiveStorageService.clearAll()
                   setShowFilterModal(false)
                   loadDoctors()
                 }}

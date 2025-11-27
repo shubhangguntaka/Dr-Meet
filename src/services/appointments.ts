@@ -146,4 +146,14 @@ export const AppointmentsService = {
       return [];
     }
   },
+
+  // Stub methods for compatibility (AsyncStorage doesn't support real-time)
+  subscribeToAppointments(doctorId: string, callback: (appointments: Appointment[]) => void): any {
+    console.log('Real-time subscriptions not supported with AsyncStorage');
+    return null;
+  },
+
+  unsubscribe(subscription: any): void {
+    // No-op for AsyncStorage
+  },
 };

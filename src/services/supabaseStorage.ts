@@ -1,8 +1,49 @@
 // src/services/supabaseStorage.ts
 import { supabase } from './supabase';
 import { User, SignupData } from '../authentication/types';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const CURRENT_USER_KEY = '@dr_meet_current_user';
 
 export const SupabaseStorageService = {
+  // Save current logged-in user (local storage for session)
+  async saveCurrentUser(user: User): Promise<void> {
+    try {
+      await AsyncStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+    } catch (error) {
+      console.error('Error saving current user:', error);
+    }
+  },
+
+  // Get current logged-in user
+  async getCurrentUser(): Promise<User | null> {
+    try {
+      const userJson = await AsyncStorage.getItem(CURRENT_USER_KEY);
+      return userJson ? JSON.parse(userJson) : null;
+    } catch (error) {
+      console.error('Error getting current user:', error);
+      return null;
+    }
+  },
+
+  // Logout - clear current user
+  async logout(): Promise<void> {
+    try {
+      await AsyncStorage.removeItem(CURRENT_USER_KEY);
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
+  },
+
+  // Clear all data (for testing)
+  async clearAll(): Promise<void> {
+    try {
+      await AsyncStorage.clear();
+    } catch (error) {
+      console.error('Error clearing storage:', error);
+    }
+  },
+
   // Get all registered users
   async getAllUsers(): Promise<User[]> {
     try {
