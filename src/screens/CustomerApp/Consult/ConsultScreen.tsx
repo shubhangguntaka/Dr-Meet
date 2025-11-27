@@ -17,6 +17,7 @@ interface Concern {
 }
 
 const concerns: Concern[] = [
+  { id: '0', name: 'All', icon: 'all-outline', iconSet: 'MaterialCommunityIcons' },
   { id: '1', name: 'Hypertension', icon: 'heart-pulse', iconSet: 'MaterialCommunityIcons' },
   { id: '2', name: 'Anxiety', icon: 'chatbubble-ellipses-outline', iconSet: 'Ionicons' },
   { id: '3', name: 'Obesity', icon: 'person-outline', iconSet: 'Ionicons' },
@@ -27,6 +28,8 @@ const concerns: Concern[] = [
   { id: '8', name: 'Frostbite', icon: 'snow-outline', iconSet: 'Ionicons' },
   { id: '9', name: 'Anxiety', icon: 'fitness-outline', iconSet: 'Ionicons' },
   { id: '10', name: 'Joint Pain', icon: 'hand-left-outline', iconSet: 'Ionicons' },
+  { id: '11', name: 'Depression', icon: 'cloud-outline', iconSet: 'Ionicons' },
+  { id: '12', name: 'Asthma', icon: 'weather-windy', iconSet: 'MaterialCommunityIcons' },
 ];
 
 const ConsultScreen = () => {

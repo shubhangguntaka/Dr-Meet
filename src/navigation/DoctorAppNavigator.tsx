@@ -9,10 +9,12 @@ import ChatScreen from "../screens/DoctorApp/Chat/ChatScreen";
 import NotificationsScreen from "../screens/DoctorApp/Notifications/NotificationsScreen";
 import SettingsScreen from "../screens/DoctorApp/Settings/SettingsScreen";
 import ProfileScreen from "../screens/DoctorApp/Profile/ProfileScreen";
+import AppointmentDetailsScreen from "../screens/DoctorApp/Appointment/AppointmentDetailsScreen";
 
 export type RootStackParamList = {
   MainTabs: undefined;
   Profile: undefined;
+  AppointmentDetails: { appointment: any };
 };
 
 export type MainTabParamList = {
@@ -125,6 +127,11 @@ function MainNavigator() {
       <Stack.Screen
         name="Profile"
         component={ProfileScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="AppointmentDetails"
+        component={AppointmentDetailsScreen}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>

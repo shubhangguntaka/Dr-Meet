@@ -85,6 +85,45 @@ export const SupabaseAppointmentsService = {
     }
   },
 
+  // Get all appointments
+  async getAllAppointments(): Promise<Appointment[]> {
+    try {
+      const { data, error } = await supabase
+        .from('appointments')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      return data?.map(apt => ({
+        id: apt.id,
+        doctorId: apt.doctor_id,
+        doctorName: apt.doctor_name,
+        patientId: apt.patient_id,
+        patientName: apt.patient_name,
+        concern: apt.concern,
+        severity: apt.severity,
+        duration: apt.duration,
+        durationType: apt.duration_type,
+        date: apt.date,
+        time: apt.time,
+        consultationType: apt.consultation_type,
+        price: apt.price,
+        paymentStatus: apt.payment_status,
+        status: apt.status,
+        gender: apt.gender,
+        age: apt.age,
+        height: apt.height,
+        weight: apt.weight,
+        createdAt: apt.created_at,
+        updatedAt: apt.updated_at,
+      })) || [];
+    } catch (error) {
+      console.error('Error getting all appointments:', error);
+      return [];
+    }
+  },
+
   // Get appointments for a specific doctor
   async getAppointmentsByDoctor(doctorId: string): Promise<Appointment[]> {
     try {

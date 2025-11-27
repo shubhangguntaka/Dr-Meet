@@ -35,7 +35,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   const profileMenuItems = [
     { id: '1', title: 'Personal Information', icon: 'person-outline', onPress: () => {} },
     { id: '2', title: 'Medical History', icon: 'medical-outline', onPress: () => {} },
-    { id: '3', title: 'Appointments', icon: 'calendar-outline', onPress: () => {} },
+    { id: '3', title: 'Appointments', icon: 'calendar-outline', onPress: () => navigation?.navigate('ShowAppointments') },
     { id: '4', title: 'Prescriptions', icon: 'document-text-outline', onPress: () => {} },
     { id: '5', title: 'Settings', icon: 'settings-outline', onPress: () => {} },
     { id: '6', title: 'Help & Support', icon: 'help-circle-outline', onPress: () => {} },

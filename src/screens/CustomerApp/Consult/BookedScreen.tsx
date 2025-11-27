@@ -32,6 +32,7 @@ const BookedScreen = () => {
   } = route.params
 
   const [appointmentId, setAppointmentId] = useState<string | null>(null)
+  const [paymentCompleted, setPaymentCompleted] = useState(false)
   const consultationFee = 50 // Fixed consultation fee
   const currentWalletBalance = 660 // This should come from user context/state
 
@@ -84,19 +85,77 @@ const BookedScreen = () => {
       // Update payment status to paid
       await ActiveAppointmentsService.updatePaymentStatus(appointmentId, 'paid')
 
-      Alert.alert(
-        'Payment Successful',
-        'Your payment has been processed successfully!',
-        [{ text: 'OK', onPress: () => navigation.navigate('MainTabs') }]
-      )
+      // Show success screen
+      setPaymentCompleted(true)
     } catch (error) {
       console.error('Error processing payment:', error)
       Alert.alert('Error', 'Payment failed. Please try again.')
     }
   }
 
+  const handleCheckBookings = () => {
+    navigation.navigate('ShowAppointments')
+  }
+
+  const handlePaymentLater = () => {
+    navigation.navigate('ShowAppointments')
+  }
+
+  const handleGoBack = () => {
+    navigation.navigate('MainTabs')
+  }
+
+  if (paymentCompleted) {
+    // Payment Success Screen
+    return (
+      <SafeAreaView style={styles.successContainer} edges={['top']}>
+        <View style={styles.successContent}>
+          {/* Doctor Image with Checkmark and Badge */}
+          <View style={styles.successImageContainer}>
+            <Image 
+              source={{ uri: doctor.profileImage || 'https://via.placeholder.com/140x140' }}
+              style={styles.successDoctorImage}
+            />
+            <View style={styles.successCheckmark}>
+              <Ionicons name="checkmark" size={28} color="#FFFFFF" />
+            </View>
+          </View>
+
+          {/* Payment Info */}
+          <Text style={styles.successTitle}>Paid ₹{consultationFee}</Text>
+          <Text style={styles.successSubtitle}>Chat Consultation Booked Successfully</Text>
+
+          {/* Available Balance */}
+          <View style={styles.balanceContainer}>
+            <Ionicons name="wallet-outline" size={24} color="#7C3AED" />
+            <Text style={styles.balanceLabel}>Available Balance</Text>
+            <Text style={styles.balanceAmount}>₹ {currentWalletBalance - consultationFee}</Text>
+          </View>
+        </View>
+
+        {/* Check Bookings Button */}
+        <TouchableOpacity 
+          style={styles.checkBookingsButton}
+          onPress={handleCheckBookings}
+        >
+          <Text style={styles.checkBookingsButtonText}>Check Bookings</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    )
+  }
+
+  // Pre-Payment Screen
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      {/* Header with Back Button */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color="#1F2937" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Booking Confirmation</Text>
+        <View style={styles.placeholder} />
+      </View>
+
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
           {/* Doctor Image with Checkmark */}
@@ -151,13 +210,21 @@ const BookedScreen = () => {
             </View>
           </View>
 
-          {/* Make Payment Button */}
-          <TouchableOpacity 
-            style={styles.paymentButton}
-            onPress={handlePayment}
-          >
-            <Text style={styles.paymentButtonText}>Make payment</Text>
-          </TouchableOpacity>
+          {/* Payment Buttons */}
+          <View style={styles.paymentButtonsContainer}>
+            <TouchableOpacity 
+              style={styles.paymentLaterButton}
+              onPress={handlePaymentLater}
+            >
+              <Text style={styles.paymentLaterButtonText}>Payment Later</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.paymentButton}
+              onPress={handlePayment}
+            >
+              <Text style={styles.paymentButtonText}>Make payment</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -170,6 +237,25 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#E8F5E9',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#FFFFFF',
+  },
+  backButton: {
+    padding: 4,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  placeholder: {
+    width: 32,
   },
   scrollView: {
     flex: 1,
@@ -261,14 +347,37 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#3A643B',
   },
+  paymentButtonsContainer: {
+    flexDirection: 'row',
+    width: '100%',
+    gap: 12,
+    marginTop: 32,
+  },
+  paymentLaterButton: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#3A643B',
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+  },
+  paymentLaterButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#3A643B',
+  },
   paymentButton: {
+    flex: 1,
     backgroundColor: '#3A643B',
     paddingVertical: 16,
-    paddingHorizontal: 32,
     borderRadius: 12,
-    width: '100%',
     alignItems: 'center',
-    marginTop: 32,
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -276,6 +385,95 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   paymentButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  // Payment Success Screen Styles
+  successContainer: {
+    flex: 1,
+    backgroundColor: '#D4E8D4',
+    justifyContent: 'space-between',
+  },
+  successContent: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+  },
+  successImageContainer: {
+    position: 'relative',
+    marginBottom: 32,
+    alignItems: 'center',
+  },
+  successDoctorImage: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 4,
+    borderColor: '#FFFFFF',
+  },
+  successCheckmark: {
+    position: 'absolute',
+    bottom: 5,
+    left: '50%',
+    marginLeft: -20,
+    backgroundColor: '#4CAF50',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 4,
+    borderColor: '#FFFFFF',
+  },
+  successTitle: {
+    fontSize: 28,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  successSubtitle: {
+    fontSize: 16,
+    color: '#6B7280',
+    textAlign: 'center',
+    marginBottom: 40,
+  },
+  balanceContainer: {
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 24,
+    paddingHorizontal: 40,
+    borderRadius: 16,
+    minWidth: 200,
+  },
+  balanceLabel: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  balanceAmount: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#1F2937',
+  },
+  checkBookingsButton: {
+    backgroundColor: '#2D5F30',
+    marginHorizontal: 20,
+    marginBottom: 20,
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  checkBookingsButtonText: {
     fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',

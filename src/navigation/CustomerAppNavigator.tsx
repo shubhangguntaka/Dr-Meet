@@ -13,11 +13,15 @@ import DoctorsListScreen from "../screens/CustomerApp/Consult/DoctorsListScreen"
 import ScheduleScreen from "../screens/CustomerApp/Consult/ScheduleScreen";
 import BookingScreen from "../screens/CustomerApp/Consult/BookingScreen";
 import BookedScreen from "../screens/CustomerApp/Consult/BookedScreen";
+import ShowAppointments from "../screens/CustomerApp/Profile/ShowAppointmentsScreen";
+import AppointmentDetailsScreen from "../screens/CustomerApp/Profile/AppointmentDetailsScreen";
 
 export type RootStackParamList = {
   MainTabs: undefined;
   SelectConcern: undefined;
   Profile: undefined;
+  ShowAppointments: undefined;
+  AppointmentDetails: { appointment: any };
   DoctorsList: { concernName: string };
   Schedule: { doctor: any };
   Booking: { doctor: any; consultationType: string; price: number };
@@ -184,6 +188,16 @@ function MainNavigator() {
       <Stack.Screen
         name="Booked"
         component={BookedScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="ShowAppointments"
+        component={ShowAppointments}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="AppointmentDetails"
+        component={AppointmentDetailsScreen}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>
