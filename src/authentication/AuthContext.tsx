@@ -38,15 +38,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const checkCurrentUser = async () => {
     try {
+      console.log('Checking for existing user session...');
       const user = await ActiveStorageService.getCurrentUser();
       
       if (user) {
+        console.log('Found existing user session:', user.email);
         setAuthState({
           user,
           isLoading: false,
           isAuthenticated: true,
         });
       } else {
+        console.log('No existing user session found');
         setAuthState({
           user: null,
           isLoading: false,
@@ -65,11 +68,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (credentials: LoginCredentials): Promise<{ success: boolean; message: string }> => {
     try {
-      const user = await ActiveStorageService.verifyLogin(
+      console.log('Login attempt started');
+      let user = await ActiveStorageService.verifyLogin(
         credentials.email,
         credentials.password,
         credentials.role
       );
+
+      // If login fails, try to fix missing password and retry once
+      if (!user && typeof ActiveStorageService.fixMissingPasswords === 'function') {
+        console.log('Login failed, attempting to fix missing password...');
+        const fixed = await ActiveStorageService.fixMissingPasswords(
+          credentials.email,
+          credentials.password,
+          credentials.role
+        );
+        
+        if (fixed) {
+          console.log('Password fixed, retrying login...');
+          user = await ActiveStorageService.verifyLogin(
+            credentials.email,
+            credentials.password,
+            credentials.role
+          );
+        }
+      }
 
       if (user) {
         await ActiveStorageService.saveCurrentUser(user);
@@ -79,13 +102,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           isLoading: false,
           isAuthenticated: true,
         });
+        console.log('Login state updated successfully');
         return { success: true, message: 'Login successful' };
       } else {
-        return { success: false, message: 'Invalid email, password, or role' };
+        console.log('Login failed: Invalid credentials');
+        return { success: false, message: 'Invalid email, password, or role. Please check your credentials and try again.' };
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login error:', error);
-      return { success: false, message: 'Login failed. Please try again.' };
+      const errorMessage = error?.message || 'Network error. Please check your connection and try again.';
+      return { success: false, message: errorMessage };
     }
   };
 
