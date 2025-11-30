@@ -258,6 +258,20 @@ const AppointmentDetailsScreen = () => {
           )}
         </View>
       </ScrollView>
+
+      {/* Start Call Button */}
+      <View style={styles.bottomButtonContainer}>
+        <TouchableOpacity 
+          style={styles.startCallButton}
+          onPress={() => navigation.navigate('VideoCall', {
+            appointment: appointment,
+            userRole: 'doctor'
+          })}
+        >
+          <Ionicons name={appointment.consultationType === 'video' ? 'videocam' : 'call'} size={24} color="#FFFFFF" />
+          <Text style={styles.startCallButtonText}>Start {appointment.consultationType === 'video' ? 'Video' : 'Audio'} Call</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   )
 }
@@ -400,6 +414,27 @@ const styles = StyleSheet.create({
   },
   updateButtonText: {
     fontSize: 14,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  bottomButtonContainer: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+  },
+  startCallButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#2D5F30',
+    paddingVertical: 14,
+    borderRadius: 8,
+    gap: 8,
+  },
+  startCallButtonText: {
+    fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
   },

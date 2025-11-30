@@ -79,8 +79,12 @@ const ShowAppointments = () => {
 
   const handleProceedCall = () => {
     setShowDisclaimerModal(false)
-    // Handle actual call logic here
-    Alert.alert('Start Call', `Starting ${selectedAppointment?.consultationType} call with Dr. ${selectedAppointment?.doctorName}...`)
+    if (selectedAppointment) {
+      navigation.navigate('VideoCall', {
+        appointment: selectedAppointment,
+        userRole: 'customer'
+      })
+    }
   }
 
   const getStatusColor = (status: string) => {

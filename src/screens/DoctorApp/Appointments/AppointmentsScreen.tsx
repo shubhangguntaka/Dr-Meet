@@ -136,8 +136,12 @@ const AppointmentScreen = () => {
 
   const handleProceedCall = () => {
     setShowDisclaimerModal(false)
-    // Handle actual call logic here
-    Alert.alert('Start Call', `Starting ${selectedAppointment?.consultationType} call with ${selectedAppointment?.patientName}...`)
+    if (selectedAppointment) {
+      navigation.navigate('VideoCall', {
+        appointment: selectedAppointment,
+        userRole: 'doctor'
+      })
+    }
   }
 
   const handleCancel = async (appointmentId: string) => {

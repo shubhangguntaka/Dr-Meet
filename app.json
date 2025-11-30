@@ -13,13 +13,18 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.shubhangguntaka.drmeet",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "jsEngine": "jsc",
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "permissions": [
@@ -41,6 +46,13 @@
       [
         "expo-dev-client"
       ]
-    ]
+    ],
+    "scheme": "drmeet",
+    "extra": {
+      "eas": {
+        "projectId": "312a675c-6dfd-4046-bf37-e56c6a7b445c"
+      }
+    },
+    "owner": "shubhangguntaka"
   }
 }

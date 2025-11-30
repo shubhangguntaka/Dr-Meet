@@ -4,17 +4,19 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import HomeScreen from "../screens/DoctorApp/Home/HomeScreen";
-import AppointmentScreen from "../screens/DoctorApp/Appointment/AppointmentScreen";
+import AppointmentScreen from "../screens/DoctorApp/Appointments/AppointmentsScreen";
 import ChatScreen from "../screens/DoctorApp/Chat/ChatScreen";
 import NotificationsScreen from "../screens/DoctorApp/Notifications/NotificationsScreen";
 import SettingsScreen from "../screens/DoctorApp/Settings/SettingsScreen";
 import ProfileScreen from "../screens/DoctorApp/Profile/ProfileScreen";
-import AppointmentDetailsScreen from "../screens/DoctorApp/Appointment/AppointmentDetailsScreen";
+import AppointmentDetailsScreen from "../screens/DoctorApp/Appointments/AppointmentDetailsScreen";
+import VideoCallScreen from "../screens/VideoCallScreen";
 
 export type RootStackParamList = {
   MainTabs: undefined;
   Profile: undefined;
   AppointmentDetails: { appointment: any };
+  VideoCall: { appointment: any; userRole: 'doctor' | 'customer' };
 };
 
 export type MainTabParamList = {
@@ -132,6 +134,11 @@ function MainNavigator() {
       <Stack.Screen
         name="AppointmentDetails"
         component={AppointmentDetailsScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="VideoCall"
+        component={VideoCallScreen}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>

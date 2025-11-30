@@ -15,6 +15,7 @@ import BookingScreen from "../screens/CustomerApp/Consult/BookingScreen";
 import BookedScreen from "../screens/CustomerApp/Consult/BookedScreen";
 import ShowAppointments from "../screens/CustomerApp/Profile/ShowAppointmentsScreen";
 import AppointmentDetailsScreen from "../screens/CustomerApp/Profile/AppointmentDetailsScreen";
+import VideoCallScreen from "../screens/VideoCallScreen";
 
 export type RootStackParamList = {
   MainTabs: undefined;
@@ -22,6 +23,7 @@ export type RootStackParamList = {
   Profile: undefined;
   ShowAppointments: undefined;
   AppointmentDetails: { appointment: any };
+  VideoCall: { appointment: any; userRole: 'doctor' | 'customer' };
   DoctorsList: { concernName: string };
   Schedule: { doctor: any };
   Booking: { doctor: any; consultationType: string; price: number };
@@ -198,6 +200,11 @@ function MainNavigator() {
       <Stack.Screen
         name="AppointmentDetails"
         component={AppointmentDetailsScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="VideoCall"
+        component={VideoCallScreen}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>
