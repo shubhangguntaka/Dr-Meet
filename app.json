@@ -37,7 +37,9 @@
         "android.permission.MODIFY_AUDIO_SETTINGS",
         "android.permission.INTERNET"
       ],
-      "package": "com.shubhangguntaka.drmeet"
+      "package": "com.shubhangguntaka.drmeet",
+      "enableProguardInReleaseBuilds": true,
+      "enableShrinkResourcesInReleaseBuilds": true
     },
     "web": {
       "favicon": "./assets/favicon.png"
