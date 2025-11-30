@@ -300,6 +300,6 @@ For issues or questions:
 
 ---
 
-**Developed by**: [Your Name]
+**Developed by**: Shubhang Guntaka
 **Date**: November 30, 2025
 **Assignment**: React Native Mobile App Developer Internship - Amrutam Pharmaceuticals
