@@ -25,6 +25,7 @@ interface Appointment {
   price: number;
   paymentStatus: 'paid' | 'pending';
   status: 'booked' | 'completed' | 'cancelled';
+  callCompleted?: boolean;
   gender?: string;
   age?: number | string;
   height?: number | string;
@@ -275,24 +276,46 @@ const AppointmentScreen = () => {
 
                 {/* Action Buttons */}
                 <View style={styles.actionButtons}>
-                  <TouchableOpacity 
-                    style={styles.cancelButton}
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      handleCancel(appointment.id);
-                    }}
-                  >
-                    <Text style={styles.cancelButtonText}>Cancel</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={styles.startCallButton}
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      handleStartCall(appointment);
-                    }}
-                  >
-                    <Text style={styles.startCallButtonText}>Start Call</Text>
-                  </TouchableOpacity>
+                  {appointment.callCompleted ? (
+                    <>
+                      <TouchableOpacity 
+                        style={styles.completedButton}
+                        disabled
+                      >
+                        <Text style={styles.completedButtonText}>Done</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity 
+                        style={styles.uploadButton}
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          navigation.navigate('AppointmentDetails', { appointment });
+                        }}
+                      >
+                        <Text style={styles.uploadButtonText}>Upload Prescription</Text>
+                      </TouchableOpacity>
+                    </>
+                  ) : (
+                    <>
+                      <TouchableOpacity 
+                        style={styles.cancelButton}
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          handleCancel(appointment.id);
+                        }}
+                      >
+                        <Text style={styles.cancelButtonText}>Cancel</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity 
+                        style={styles.startCallButton}
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          handleStartCall(appointment);
+                        }}
+                      >
+                        <Text style={styles.startCallButtonText}>Start Call</Text>
+                      </TouchableOpacity>
+                    </>
+                  )}
                 </View>
               </TouchableOpacity>
             ))
@@ -631,6 +654,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   startCallButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  completedButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    backgroundColor: '#F9FAFB',
+    alignItems: 'center',
+  },
+  completedButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#9CA3AF',
+  },
+  uploadButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    backgroundColor: '#3A643B',
+    alignItems: 'center',
+  },
+  uploadButtonText: {
     fontSize: 14,
     fontWeight: '600',
     color: '#FFFFFF',

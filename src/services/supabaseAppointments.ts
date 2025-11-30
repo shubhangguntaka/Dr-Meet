@@ -17,6 +17,7 @@ export interface Appointment {
   price: number;
   paymentStatus: 'paid' | 'pending';
   status: 'booked' | 'completed' | 'cancelled';
+  callCompleted?: boolean;
   gender?: string;
   age?: number;
   height?: number;
@@ -46,6 +47,7 @@ export const SupabaseAppointmentsService = {
           price: appointment.price,
           payment_status: appointment.paymentStatus,
           status: appointment.status,
+          call_completed: false,
           gender: appointment.gender,
           age: appointment.age,
           height: appointment.height,
@@ -72,6 +74,7 @@ export const SupabaseAppointmentsService = {
         price: data.price,
         paymentStatus: data.payment_status,
         status: data.status,
+        callCompleted: data.call_completed,
         gender: data.gender,
         age: data.age,
         height: data.height,
@@ -111,6 +114,7 @@ export const SupabaseAppointmentsService = {
         price: apt.price,
         paymentStatus: apt.payment_status,
         status: apt.status,
+        callCompleted: apt.call_completed,
         gender: apt.gender,
         age: apt.age,
         height: apt.height,
@@ -152,6 +156,7 @@ export const SupabaseAppointmentsService = {
         price: apt.price,
         paymentStatus: apt.payment_status,
         status: apt.status,
+        callCompleted: apt.call_completed,
         gender: apt.gender,
         age: apt.age,
         height: apt.height,
@@ -192,6 +197,7 @@ export const SupabaseAppointmentsService = {
         price: apt.price,
         paymentStatus: apt.payment_status,
         status: apt.status,
+        callCompleted: apt.call_completed,
         gender: apt.gender,
         age: apt.age,
         height: apt.height,
@@ -234,6 +240,21 @@ export const SupabaseAppointmentsService = {
       if (error) throw error;
     } catch (error) {
       console.error('Error updating appointment status:', error);
+      throw error;
+    }
+  },
+
+  // Mark appointment as call completed
+  async markCallCompleted(appointmentId: string): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('appointments')
+        .update({ call_completed: true })
+        .eq('id', appointmentId);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error marking call as completed:', error);
       throw error;
     }
   },
@@ -286,6 +307,7 @@ export const SupabaseAppointmentsService = {
         price: apt.price,
         paymentStatus: apt.payment_status,
         status: apt.status,
+        callCompleted: apt.call_completed,
         gender: apt.gender,
         age: apt.age,
         height: apt.height,

@@ -45,6 +45,18 @@
     "plugins": [
       [
         "expo-dev-client"
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Dr. Meet to access your camera for video consultations."
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Allow Dr. Meet to access your microphone for audio consultations."
+        }
       ]
     ],
     "scheme": "drmeet",

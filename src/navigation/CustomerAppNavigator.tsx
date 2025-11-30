@@ -1,8 +1,11 @@
 import React from "react";
+import { View } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { CallProvider } from "../context/CallContext";
+import MinimizedCallWindow from "../components/MinimizedCallWindow";
 import HomeScreen from "../screens/CustomerApp/Home/HomeScreen";
 import BulletinScreen from "../screens/CustomerApp/Bulletin/BulletinScreen";
 import ConsultScreen from "../screens/CustomerApp/Consult/ConsultScreen";
@@ -16,6 +19,9 @@ import BookedScreen from "../screens/CustomerApp/Consult/BookedScreen";
 import ShowAppointments from "../screens/CustomerApp/Profile/ShowAppointmentsScreen";
 import AppointmentDetailsScreen from "../screens/CustomerApp/Profile/AppointmentDetailsScreen";
 import VideoCallScreen from "../screens/VideoCallScreen";
+import NotAnsweredCall from "../screens/CustomerApp/CallScreens/DoctorNotAnsweredCallScreen";
+import DisconnectedCallScreen from "../screens/CustomerApp/CallScreens/DoctorDisconnectedCallScreen";
+import CallEndedScreen from "../screens/CustomerApp/CallScreens/CallEndedScreen";
 
 export type RootStackParamList = {
   MainTabs: undefined;
@@ -24,6 +30,9 @@ export type RootStackParamList = {
   ShowAppointments: undefined;
   AppointmentDetails: { appointment: any };
   VideoCall: { appointment: any; userRole: 'doctor' | 'customer' };
+  NotAnsweredCall: { appointment: any; doctorName: string };
+  DisconnectedCallScreen: { appointment: any; doctorName: string; callDuration: number };
+  CallEndedScreen: { appointment: any; doctorName: string; callDuration: number; userRole: 'doctor' | 'customer' };
   DoctorsList: { concernName: string };
   Schedule: { doctor: any };
   Booking: { doctor: any; consultationType: string; price: number };
@@ -207,14 +216,32 @@ function MainNavigator() {
         component={VideoCallScreen}
         options={{ headerShown: false }}
       />
+      <Stack.Screen
+        name="NotAnsweredCall"
+        component={NotAnsweredCall}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="DisconnectedCallScreen"
+        component={DisconnectedCallScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="CallEndedScreen"
+        component={CallEndedScreen}
+        options={{ headerShown: false }}
+      />
     </Stack.Navigator>
   );
 }
 
 export default function CustomerAppNavigator() {
   return (
-    <NavigationContainer>
-      <MainNavigator />
-    </NavigationContainer>
+    <CallProvider>
+      <NavigationContainer>
+        <MainNavigator />
+        <MinimizedCallWindow />
+      </NavigationContainer>
+    </CallProvider>
   );
 }

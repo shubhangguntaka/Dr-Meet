@@ -1,8 +1,12 @@
 import React from "react";
+import { View } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { CallProvider } from "../context/CallContext";
+import MinimizedCallWindow from "../components/MinimizedCallWindow";
+import { IncomingCallListener } from "../components/IncomingCallListener";
 import HomeScreen from "../screens/DoctorApp/Home/HomeScreen";
 import AppointmentScreen from "../screens/DoctorApp/Appointments/AppointmentsScreen";
 import ChatScreen from "../screens/DoctorApp/Chat/ChatScreen";
@@ -11,12 +15,18 @@ import SettingsScreen from "../screens/DoctorApp/Settings/SettingsScreen";
 import ProfileScreen from "../screens/DoctorApp/Profile/ProfileScreen";
 import AppointmentDetailsScreen from "../screens/DoctorApp/Appointments/AppointmentDetailsScreen";
 import VideoCallScreen from "../screens/VideoCallScreen";
+import CallEndedScreen from "../screens/DoctorApp/CallScreens/CallEndedScreen";
+import PatientNotAvailableScreen from "../screens/DoctorApp/CallScreens/PatientNotAvailableScreen";
+import PatientDisconnectedScreen from "../screens/DoctorApp/CallScreens/PatientDisconnectedScreen";
 
 export type RootStackParamList = {
   MainTabs: undefined;
   Profile: undefined;
   AppointmentDetails: { appointment: any };
   VideoCall: { appointment: any; userRole: 'doctor' | 'customer' };
+  CallEndedScreen: { appointment: any; patientName?: string; callDuration: number; userRole: 'doctor' | 'customer' };
+  PatientNotAvailable: { appointment: any; patientName: string };
+  PatientDisconnectedScreen: { appointment: any; patientName: string; callDuration: number };
 };
 
 export type MainTabParamList = {
@@ -141,14 +151,34 @@ function MainNavigator() {
         component={VideoCallScreen}
         options={{ headerShown: false }}
       />
+      <Stack.Screen
+        name="CallEndedScreen"
+        component={CallEndedScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="PatientNotAvailable"
+        component={PatientNotAvailableScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="PatientDisconnectedScreen"
+        component={PatientDisconnectedScreen}
+        options={{ headerShown: false }}
+      />
     </Stack.Navigator>
   );
 }
 
 export default function DoctorAppNavigator() {
   return (
-    <NavigationContainer>
-      <MainNavigator />
-    </NavigationContainer>
+    <CallProvider>
+      <NavigationContainer>
+        <IncomingCallListener>
+          <MainNavigator />
+          <MinimizedCallWindow />
+        </IncomingCallListener>
+      </NavigationContainer>
+    </CallProvider>
   );
 }

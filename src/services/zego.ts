@@ -1,6 +1,7 @@
 // Video/Audio Call Service - Clean implementation without native dependencies
-export const ZEGO_APP_ID = 1184811620;
-export const ZEGO_APP_SIGN = "4e5d981a0cb8493a35939b852c3dd04e6c4b565b2282945b84078a9e1f116074";
+// ZegoCloud Configuration from .env
+export const ZEGO_APP_ID = Number(process.env.ZEGO_APP_ID);
+export const ZEGO_APP_SIGN = process.env.ZEGO_APP_SIGN;
 
 class ZegoService {
   private static instance: ZegoService;

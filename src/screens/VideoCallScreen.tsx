@@ -4,9 +4,19 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import ZegoService from '../services/zego';
+
+// Optional: Keep awake during calls
+let useKeepAwake: any;
+try {
+  useKeepAwake = require('react-native-keep-awake').useKeepAwake;
+} catch (error) {
+  console.log('⚠️ react-native-keep-awake not available');
+  useKeepAwake = () => {}; // No-op fallback
+}
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
-import { Audio } from 'expo-av';
+import { useAudioRecorder, RecordingOptions, AudioModule, AndroidOutputFormat, AndroidAudioEncoder, AudioQuality } from 'expo-audio';
 import { supabase } from '../services/supabase';
+import { useCall } from '../context/CallContext';
 
 const { width, height } = Dimensions.get('window');
 
@@ -30,6 +40,16 @@ const VideoCallScreen = () => {
   const route = useRoute<RouteProp<RouteParams, 'VideoCall'>>();
   const navigation = useNavigation();
   const { appointment, userRole } = route.params;
+  const { setCallState, callState, minimizeCall } = useCall();
+  
+  // Keep screen awake during call (if available)
+  if (useKeepAwake && typeof useKeepAwake === 'function') {
+    try {
+      useKeepAwake();
+    } catch (error) {
+      // Keep awake not available
+    }
+  }
 
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(appointment.consultationType === 'phone');
@@ -42,11 +62,17 @@ const VideoCallScreen = () => {
   const [remoteUserConnected, setRemoteUserConnected] = useState(false);
   const [remoteUserVideo, setRemoteUserVideo] = useState(false);
   const [remoteUserAudio, setRemoteUserAudio] = useState(false);
+  const [userBalance, setUserBalance] = useState(1000); // Mock balance for demo
   
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
-  const recordingRef = useRef<Audio.Recording | null>(null);
+  // Using minimal config to avoid enum casting errors
+  const audioRecorder = useAudioRecorder({
+    extension: '.m4a',
+    sampleRate: 44100,
+  } as any);
   const channelRef = useRef<any>(null);
+  const balanceCheckInterval = useRef<NodeJS.Timeout | null>(null);
 
   const roomID = `appointment_${appointment.id}`;
   const userID = userRole === 'doctor' ? (appointment.doctor_id || `doctor_${Date.now()}`) : (appointment.customer_id || `customer_${Date.now()}`);
@@ -73,19 +99,126 @@ const VideoCallScreen = () => {
     };
   }, [hasPermissions, isConnected]);
 
+  // Update call context for minimized state
+  useEffect(() => {
+    if (isConnected) {
+      setCallState({
+        isMinimized: false,
+        isActive: true,
+        appointment,
+        userRole,
+        callDuration,
+        isMuted,
+        isVideoOff,
+        remoteUserConnected,
+        remoteUserName,
+      });
+    }
+  }, [callDuration, isMuted, isVideoOff, remoteUserConnected, isConnected]);
+
+  // Monitor balance during call (Customer only)
+  useEffect(() => {
+    if (userRole !== 'customer' || !isConnected || !remoteUserConnected) return;
+
+    // Check balance every 10 seconds during active call
+    balanceCheckInterval.current = setInterval(() => {
+      // Simulate balance deduction (₹6.15 per minute = ~₹0.1025 per second)
+      setUserBalance(prev => {
+        const newBalance = prev - 1.025; // Deduct every 10 seconds
+        
+        // If balance is insufficient (less than ₹25), disconnect
+        if (newBalance < 25) {
+          console.log('⚠️ Insufficient balance, disconnecting call');
+          handleInsufficientBalance();
+          return 0;
+        }
+        
+        return newBalance;
+      });
+    }, 10000); // Check every 10 seconds
+
+    return () => {
+      if (balanceCheckInterval.current) {
+        clearInterval(balanceCheckInterval.current);
+        balanceCheckInterval.current = null;
+      }
+    };
+  }, [isConnected, remoteUserConnected, userRole]);
+
+  const handleInsufficientBalance = async () => {
+    try {
+      if (balanceCheckInterval.current) {
+        clearInterval(balanceCheckInterval.current);
+        balanceCheckInterval.current = null;
+      }
+      
+      await cleanup();
+      
+      // Navigate to different screens based on user role
+      if (userRole === 'customer') {
+        navigation.navigate('DisconnectedCallScreen' as never, {
+          appointment,
+          doctorName: appointment.doctorName || 'Doctor',
+          callDuration,
+        } as never);
+      } else {
+        navigation.navigate('PatientDisconnectedScreen' as never, {
+          appointment,
+          patientName: appointment.patientName || 'Patient',
+          callDuration,
+        } as never);
+      }
+    } catch (error) {
+      console.error('Error handling insufficient balance:', error);
+    }
+  };
+
+  // Check if doctor doesn't join within 5 minutes (Customer only)
+  useEffect(() => {
+    if (userRole !== 'customer' || !isConnected) return;
+
+    const timeout = setTimeout(() => {
+      if (!remoteUserConnected) {
+        console.log('⏰ Doctor did not join within 5 minutes');
+        cleanup();
+        navigation.navigate('NotAnsweredCall' as never, {
+          appointment,
+          doctorName: appointment.doctorName || 'Doctor',
+        } as never);
+      }
+    }, 1 * 60 * 1000); // 5 minutes
+
+    return () => clearTimeout(timeout);
+  }, [isConnected, remoteUserConnected, userRole]);
+
+  // Check if patient doesn't join within 5 minutes (Doctor only)
+  useEffect(() => {
+    if (userRole !== 'doctor' || !isConnected) return;
+
+    const timeout = setTimeout(() => {
+      if (!remoteUserConnected) {
+        console.log('⏰ Patient did not join within 5 minutes');
+        cleanup();
+        navigation.navigate('PatientNotAvailable' as never, {
+          appointment,
+          patientName: appointment.patientName || 'Patient',
+        } as never);
+      }
+    }, 1 * 60 * 1000); // 5 minutes
+
+    return () => clearTimeout(timeout);
+  }, [isConnected, remoteUserConnected, userRole]);
+
   const requestPermissions = async () => {
     try {
       const camPermission = await requestCameraPermission();
-      const audioPermission = await Audio.requestPermissionsAsync();
+      const audioPermission = await AudioModule.requestRecordingPermissionsAsync();
       
       if (camPermission?.granted && audioPermission.status === 'granted') {
         // Configure audio mode for recording
-        await Audio.setAudioModeAsync({
-          allowsRecordingIOS: true,
-          playsInSilentModeIOS: true,
-          staysActiveInBackground: true,
-          shouldDuckAndroid: true,
-          playThroughEarpieceAndroid: false,
+        await AudioModule.setAudioModeAsync({
+          allowsRecording: true,
+          playsInSilentMode: true,
         });
         
         setHasPermissions(true);
@@ -171,6 +304,13 @@ const VideoCallScreen = () => {
             console.log(`📡 Remote media state: video=${payload.video}, audio=${payload.audio}`);
           }
         })
+        // Listen for call end event
+        .on('broadcast', { event: 'call-ended' }, ({ payload }) => {
+          if (payload.userId !== userID) {
+            console.log(`📞 Call ended by ${payload.endedBy}`);
+            handleRemoteCallEnd();
+          }
+        })
         .subscribe(async (status) => {
           if (status === 'SUBSCRIBED') {
             // Track our presence
@@ -190,6 +330,21 @@ const VideoCallScreen = () => {
                 audio: !isMuted,
               },
             });
+            
+            // Notify doctor when customer joins the call
+            if (userRole === 'customer' && appointment.doctor_id) {
+              const { callNotificationService } = await import('../services/callNotificationService');
+              await callNotificationService.notifyDoctor(appointment.doctor_id, {
+                roomId: roomID,
+                appointmentId: appointment.id,
+                patientId: userID,
+                patientName: userName,
+                concern: (appointment as any).concern || 'General consultation',
+                consultationType: appointment.consultationType,
+                appointment,
+              });
+              console.log('📞 Notified doctor of incoming call');
+            }
             
             console.log('📡 Subscribed to call channel');
           }
@@ -215,48 +370,52 @@ const VideoCallScreen = () => {
     }
   };
 
+  const handleRemoteCallEnd = async () => {
+    try {
+      if (balanceCheckInterval.current) {
+        clearInterval(balanceCheckInterval.current);
+        balanceCheckInterval.current = null;
+      }
+      
+      await cleanup();
+      
+      if (userRole === 'customer') {
+        navigation.navigate('CallEndedScreen' as never, {
+          appointment,
+          doctorName: appointment.doctorName || 'Doctor',
+          callDuration,
+          userRole,
+        } as never);
+      } else {
+        navigation.navigate('CallEndedScreen' as never, {
+          appointment,
+          patientName: appointment.patientName || 'Patient',
+          callDuration,
+          userRole,
+        } as never);
+      }
+    } catch (error) {
+      console.error('Error handling remote call end:', error);
+    }
+  };
+
   const startAudioRecording = async () => {
     try {
-      const recording = new Audio.Recording();
-      await recording.prepareToRecordAsync({
-        android: {
-          extension: '.m4a',
-          outputFormat: Audio.AndroidOutputFormat.MPEG_4,
-          audioEncoder: Audio.AndroidAudioEncoder.AAC,
-          sampleRate: 44100,
-          numberOfChannels: 2,
-          bitRate: 128000,
-        },
-        ios: {
-          extension: '.m4a',
-          outputFormat: Audio.IOSOutputFormat.MPEG4AAC,
-          audioQuality: Audio.IOSAudioQuality.HIGH,
-          sampleRate: 44100,
-          numberOfChannels: 2,
-          bitRate: 128000,
-          linearPCMBitDepth: 16,
-          linearPCMIsBigEndian: false,
-          linearPCMIsFloat: false,
-        },
-        web: {
-          mimeType: 'audio/webm',
-          bitsPerSecond: 128000,
-        },
-      });
-      await recording.startAsync();
-      recordingRef.current = recording;
-      setIsRecording(true);
-      console.log('🎤 Audio recording started');
+      if (audioRecorder && typeof audioRecorder.record === 'function') {
+        await audioRecorder.record();
+        setIsRecording(true);
+        console.log('🎤 Audio recording started');
+      }
     } catch (error) {
       console.error('Failed to start audio recording:', error);
+      setIsRecording(false);
     }
   };
 
   const stopAudioRecording = async () => {
     try {
-      if (recordingRef.current) {
-        await recordingRef.current.stopAndUnloadAsync();
-        recordingRef.current = null;
+      if (isRecording && audioRecorder) {
+        await audioRecorder.stop();
         setIsRecording(false);
         console.log('🎤 Audio recording stopped');
       }
@@ -267,14 +426,26 @@ const VideoCallScreen = () => {
 
   const cleanup = async () => {
     try {
-      // Unsubscribe from realtime channel
-      if (channelRef.current) {
-        await channelRef.current.untrack();
-        await channelRef.current.unsubscribe();
-        channelRef.current = null;
+      // Stop audio recording first
+      if (isRecording) {
+        try {
+          await stopAudioRecording();
+        } catch (audioError) {
+          console.log('Audio cleanup warning:', audioError);
+        }
       }
       
-      await stopAudioRecording();
+      // Unsubscribe from realtime channel
+      if (channelRef.current) {
+        try {
+          await channelRef.current.untrack();
+          await channelRef.current.unsubscribe();
+          channelRef.current = null;
+        } catch (channelError) {
+          console.log('Channel cleanup warning:', channelError);
+        }
+      }
+      
       await ZegoService.stopPublishingStream(streamID);
       await ZegoService.logoutRoom(roomID);
       await ZegoService.destroyEngine();
@@ -283,9 +454,53 @@ const VideoCallScreen = () => {
     }
   };
 
-  const handleEndCall = async () => {
-    await cleanup();
+  const handleMinimize = () => {
+    minimizeCall();
     navigation.goBack();
+  };
+
+  const handleEndCall = async () => {
+    try {
+      // Clear balance interval if exists
+      if (balanceCheckInterval.current) {
+        clearInterval(balanceCheckInterval.current);
+        balanceCheckInterval.current = null;
+      }
+      
+      // Broadcast call end to remote user
+      if (channelRef.current) {
+        await channelRef.current.send({
+          type: 'broadcast',
+          event: 'call-ended',
+          payload: {
+            userId: userID,
+            endedBy: userName,
+          },
+        });
+      }
+      
+      await cleanup();
+      
+      // Navigate to CallEndedScreen
+      if (userRole === 'customer') {
+        navigation.navigate('CallEndedScreen' as never, {
+          appointment,
+          doctorName: appointment.doctorName || 'Doctor',
+          callDuration,
+          userRole,
+        } as never);
+      } else {
+        navigation.navigate('CallEndedScreen' as never, {
+          appointment,
+          patientName: appointment.patientName || 'Patient',
+          callDuration,
+          userRole,
+        } as never);
+      }
+    } catch (error) {
+      console.error('Error ending call:', error);
+      navigation.goBack();
+    }
   };
 
   const toggleMute = async () => {
@@ -331,12 +546,9 @@ const VideoCallScreen = () => {
       const newSpeakerState = !isSpeakerOn;
       
       // Update audio mode
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-        staysActiveInBackground: true,
-        shouldDuckAndroid: true,
-        playThroughEarpieceAndroid: !newSpeakerState,
+      await AudioModule.setAudioModeAsync({
+        allowsRecording: true,
+        playsInSilentMode: true,
       });
       
       await ZegoService.setAudioRouteToSpeaker(newSpeakerState);
@@ -362,7 +574,11 @@ const VideoCallScreen = () => {
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       {/* Header */}
       <View style={styles.header}>
+        <TouchableOpacity style={styles.minimizeButton} onPress={handleMinimize}>
+          <Ionicons name="chevron-down" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
         <Text style={styles.callDuration}>{formatDuration(callDuration)}</Text>
+        <View style={styles.headerSpacer} />
       </View>
 
       {/* Video Views */}
@@ -374,51 +590,51 @@ const VideoCallScreen = () => {
               ref={cameraRef}
               style={styles.camera}
               facing={facing}
-            >
-              {/* Overlay Info */}
-              <View style={styles.cameraOverlay}>
-                <View style={styles.recordingIndicator}>
-                  <View style={[styles.recordingDot, isRecording && styles.recordingDotActive]} />
-                  <Text style={styles.recordingText}>
-                    {isRecording ? '🎤 Recording' : '🎤 Mic Off'}
-                  </Text>
-                </View>
-                
-                {remoteUserConnected ? (
-                  <View style={styles.remoteStatusContainer}>
-                    <View style={styles.connectedBadge}>
-                      <View style={styles.connectedDot} />
-                      <Text style={styles.connectedText}>{remoteUserName} Connected</Text>
-                    </View>
-                    <View style={styles.remoteMediaStatus}>
-                      <Ionicons 
-                        name={remoteUserVideo ? 'videocam' : 'videocam-off'} 
-                        size={16} 
-                        color={remoteUserVideo ? '#10B981' : '#EF4444'} 
-                      />
-                      <Ionicons 
-                        name={remoteUserAudio ? 'mic' : 'mic-off'} 
-                        size={16} 
-                        color={remoteUserAudio ? '#10B981' : '#EF4444'}
-                        style={{ marginLeft: 8 }}
-                      />
-                    </View>
-                  </View>
-                ) : (
-                  <Text style={styles.remoteWaitingText}>
-                    Waiting for {remoteUserName}...
-                  </Text>
-                )}
-                
-                {/* Camera Switch Button */}
-                <TouchableOpacity 
-                  style={styles.switchCameraButton}
-                  onPress={switchCamera}
-                >
-                  <Ionicons name="camera-reverse" size={28} color="#FFFFFF" />
-                </TouchableOpacity>
+            />
+            
+            {/* Overlay Info - Positioned Absolutely */}
+            <View style={styles.cameraOverlay}>
+              <View style={styles.recordingIndicator}>
+                <View style={[styles.recordingDot, isRecording && styles.recordingDotActive]} />
+                <Text style={styles.recordingText}>
+                  {isRecording ? '🎤 Recording' : '🎤 Mic Off'}
+                </Text>
               </View>
-            </CameraView>
+              
+              {remoteUserConnected ? (
+                <View style={styles.remoteStatusContainer}>
+                  <View style={styles.connectedBadge}>
+                    <View style={styles.connectedDot} />
+                    <Text style={styles.connectedText}>{remoteUserName} Connected</Text>
+                  </View>
+                  <View style={styles.remoteMediaStatus}>
+                    <Ionicons 
+                      name={remoteUserVideo ? 'videocam' : 'videocam-off'} 
+                      size={16} 
+                      color={remoteUserVideo ? '#10B981' : '#EF4444'} 
+                    />
+                    <Ionicons 
+                      name={remoteUserAudio ? 'mic' : 'mic-off'} 
+                      size={16} 
+                      color={remoteUserAudio ? '#10B981' : '#EF4444'}
+                      style={{ marginLeft: 8 }}
+                    />
+                  </View>
+                </View>
+              ) : (
+                <Text style={styles.remoteWaitingText}>
+                  Waiting for {remoteUserName}...
+                </Text>
+              )}
+              
+              {/* Camera Switch Button */}
+              <TouchableOpacity 
+                style={styles.switchCameraButton}
+                onPress={switchCamera}
+              >
+                <Ionicons name="camera-reverse" size={28} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
           </View>
         ) : (
           <View style={styles.audioCallContainer}>
@@ -529,8 +745,22 @@ const styles = StyleSheet.create({
     backgroundColor: '#1C1C1E',
   },
   header: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingVertical: 16,
+    paddingHorizontal: 16,
+  },
+  minimizeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerSpacer: {
+    width: 40,
   },
   callDuration: {
     fontSize: 16,
@@ -549,7 +779,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cameraOverlay: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: 'transparent',
     padding: 20,
   },

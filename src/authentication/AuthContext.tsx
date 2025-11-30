@@ -2,6 +2,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { AuthState, User, LoginCredentials, SignupData } from './types';
 import { ActiveStorageService } from '../services/storageAdapter';
+import { secureStorage } from '../services/secureStorage';
+import { deviceInfoService } from '../services/deviceInfoService';
 
 interface AuthContextType extends AuthState {
   login: (credentials: LoginCredentials) => Promise<{ success: boolean; message: string }>;
@@ -33,12 +35,36 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Check for existing user on mount
   useEffect(() => {
+    initializeServices();
     checkCurrentUser();
   }, []);
+
+  const initializeServices = async () => {
+    try {
+      // Initialize device info service
+      await deviceInfoService.initialize();
+    } catch (error) {
+      console.error('Failed to initialize services:', error);
+    }
+  };
 
   const checkCurrentUser = async () => {
     try {
       console.log('Checking for existing user session...');
+      
+      // Try to get session from secure storage first
+      const session = await secureStorage.getSession();
+      if (session?.user) {
+        console.log('Found encrypted session:', session.user.email);
+        setAuthState({
+          user: session.user,
+          isLoading: false,
+          isAuthenticated: true,
+        });
+        return;
+      }
+
+      // Fallback to regular storage
       const user = await ActiveStorageService.getCurrentUser();
       
       if (user) {
@@ -97,6 +123,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (user) {
         await ActiveStorageService.saveCurrentUser(user);
         
+        // Store encrypted session
+        await secureStorage.storeSession({
+          user,
+          loginTime: new Date().toISOString(),
+          deviceInfo: deviceInfoService.getAnalyticsData(),
+        });
+
+        // Store encrypted credentials for auto-login
+        await secureStorage.storeCredentials(user.id, credentials.password);
+        
         setAuthState({
           user,
           isLoading: false,
@@ -120,6 +156,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const newUser = await ActiveStorageService.saveUser(data);
       await ActiveStorageService.saveCurrentUser(newUser);
       
+      // Store encrypted session
+      await secureStorage.storeSession({
+        user: newUser,
+        loginTime: new Date().toISOString(),
+        deviceInfo: deviceInfoService.getAnalyticsData(),
+      });
+
+      // Store encrypted credentials
+      await secureStorage.storeCredentials(newUser.id, data.password);
+      
       setAuthState({
         user: newUser,
         isLoading: false,
@@ -135,6 +181,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = async () => {
     try {
       await ActiveStorageService.logout();
+      
+      // Clear encrypted session but keep credentials for quick re-login
+      await secureStorage.removeItem('session');
+      
       setAuthState({
         user: null,
         isLoading: false,
@@ -148,6 +198,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const clearAllData = async () => {
     try {
       await ActiveStorageService.clearAll();
+      
+      // Clear all encrypted storage including credentials
+      await secureStorage.clear();
+      
       setAuthState({
         user: null,
         isLoading: false,

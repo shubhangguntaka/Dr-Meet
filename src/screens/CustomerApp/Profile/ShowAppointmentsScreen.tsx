@@ -24,6 +24,7 @@ interface Appointment {
   price: number;
   paymentStatus: 'paid' | 'pending';
   status: 'booked' | 'completed' | 'cancelled';
+  callCompleted?: boolean;
   gender?: string;
   age?: number | string;
   height?: number | string;
@@ -154,12 +155,21 @@ const ShowAppointments = () => {
             >
               <Text style={styles.detailsButtonText}>View Details</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.callButton}
-              onPress={() => handleStartCall(appointment)}
-            >
-              <Text style={styles.callButtonText}>Start Call</Text>
-            </TouchableOpacity>
+            {appointment.callCompleted ? (
+              <TouchableOpacity 
+                style={styles.completedCallButton}
+                disabled
+              >
+                <Text style={styles.completedCallButtonText}>Call Completed</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity 
+                style={styles.callButton}
+                onPress={() => handleStartCall(appointment)}
+              >
+                <Text style={styles.callButtonText}>Start Call</Text>
+              </TouchableOpacity>
+            )}
           </View>
         )}
 
@@ -289,7 +299,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
   },
   backButton: {
     padding: 4,
@@ -304,7 +313,6 @@ const styles = StyleSheet.create({
   },
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
     paddingHorizontal: 16,
     paddingTop: 8,
     gap: 12,
@@ -313,7 +321,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 20,
-    backgroundColor: '#FFFFFF',
   },
   activeTab: {
     backgroundColor: '#000000',
@@ -327,11 +334,8 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   filterContainer: {
-    backgroundColor: '#FFFFFF',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
   },
   filterButton: {
     flexDirection: 'row',
@@ -440,6 +444,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+  completedCallButton: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 8,
+    backgroundColor: '#F9FAFB',
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    alignItems: 'center',
+  },
+  completedCallButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#9CA3AF',
   },
   prescriptionCard: {
     backgroundColor: '#F3E8FF',

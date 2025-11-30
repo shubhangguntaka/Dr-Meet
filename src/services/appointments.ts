@@ -16,6 +16,7 @@ export interface Appointment {
   price: number;
   paymentStatus: 'paid' | 'pending';
   status: 'booked' | 'completed' | 'cancelled';
+  callCompleted?: boolean;
   gender: string;
   age: string;
   height: string;
@@ -87,6 +88,22 @@ export const AppointmentsService = {
       }
     } catch (error) {
       console.error('Error updating appointment status:', error);
+      throw error;
+    }
+  },
+
+  // Mark appointment as call completed
+  async markCallCompleted(appointmentId: string): Promise<void> {
+    try {
+      const appointments = await this.getAllAppointments();
+      const index = appointments.findIndex(a => a.id === appointmentId);
+      
+      if (index !== -1) {
+        appointments[index].callCompleted = true;
+        await AsyncStorage.setItem(APPOINTMENTS_KEY, JSON.stringify(appointments));
+      }
+    } catch (error) {
+      console.error('Error marking call as completed:', error);
       throw error;
     }
   },

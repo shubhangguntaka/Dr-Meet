@@ -336,4 +336,9 @@ export const StorageService = {
       return [];
     }
   },
+
+  // Fix missing passwords (AsyncStorage doesn't need this, but adding for compatibility)
+  async fixMissingPasswords(email: string, password: string, role: string): Promise<boolean> {
+    return false; // Not needed for AsyncStorage
+  },
 };

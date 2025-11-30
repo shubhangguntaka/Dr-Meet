@@ -64,7 +64,8 @@ const BookingScreen = () => {
   const timeSlots = {
     morning: ['09:00 AM', '09:35 AM', '10:05 AM'],
     afternoon: ['12:00 PM', '12:35 PM', '01:05 PM'],
-    evening: ['06:00 AM', '07:00 AM', '08:05 AM']
+    evening: ['06:00 PM', '07:00 PM', '08:05 PM'],
+    night: ['09:00 PM', '09:35 PM', '10:05 PM']
   }
 
   const formatDate = (date: Date) => {

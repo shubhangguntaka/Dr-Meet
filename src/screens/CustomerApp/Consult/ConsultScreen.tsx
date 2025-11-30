@@ -17,7 +17,7 @@ interface Concern {
 }
 
 const concerns: Concern[] = [
-  { id: '0', name: 'All', icon: 'all-outline', iconSet: 'MaterialCommunityIcons' },
+  { id: '0', name: 'All', icon: 'view-grid-outline', iconSet: 'MaterialCommunityIcons' },
   { id: '1', name: 'Hypertension', icon: 'heart-pulse', iconSet: 'MaterialCommunityIcons' },
   { id: '2', name: 'Anxiety', icon: 'chatbubble-ellipses-outline', iconSet: 'Ionicons' },
   { id: '3', name: 'Obesity', icon: 'person-outline', iconSet: 'Ionicons' },
