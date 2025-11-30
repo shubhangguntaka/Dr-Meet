@@ -104,6 +104,10 @@ npm install
 ```bash
 npx expo install expo-dev-client
 ```
+#OR
+```bash
+npx expo start
+```
 
 ## ⚙️ Configuration
 
@@ -272,6 +276,8 @@ npx expo run:ios
 
 # Then start the dev server
 npm start
+#or
+npx expo start
 ```
 
 ### Test Credentials
