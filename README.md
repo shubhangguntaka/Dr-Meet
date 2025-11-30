@@ -1,4 +1,4 @@
-# 🏥 Dr. Meet - Ayurvedic Telemedicine Platform
+# 🏥 Dr. Meet - Amrutam Pharmaceuticals Internship Assignment
 
 A comprehensive React Native mobile application connecting patients with Ayurvedic doctors through video/audio consultations, built with Expo, TypeScript, and Supabase.
 
