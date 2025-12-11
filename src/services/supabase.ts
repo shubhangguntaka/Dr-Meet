@@ -2,14 +2,15 @@
 import 'react-native-url-polyfill/auto';
 import { createClient } from '@supabase/supabase-js';
 
-// ✅ Supabase credentials configured
+// Supabase credentials - OPTIONAL (app works with AsyncStorage)
 const SUPABASE_URL = 'https://fbwlxnfswggnwzdopwlk.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZid2x4bmZzd2dnbnd6ZG9wd2xrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQxNjM2MjMsImV4cCI6MjA3OTczOTYyM30.31R3O9y1JMIr5ep8qbYjl8RUnpnVAoU1OYLKl0RSdiY';
 
+// Supabase client (optional - for future cloud sync features)
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
-    autoRefreshToken: true,
-    persistSession: true,
+    autoRefreshToken: false,
+    persistSession: false,
     detectSessionInUrl: false,
   },
 });

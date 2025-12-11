@@ -6,7 +6,8 @@
  */
 
 // 👇 SET THIS TO TRUE AFTER SUPABASE SETUP
-const USE_SUPABASE = true;
+// ⚠️ DISABLED: Supabase connection issues - using local AsyncStorage
+const USE_SUPABASE = false;
 
 // Import both storage services
 import { StorageService } from '../authentication/storage';

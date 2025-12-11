@@ -6,18 +6,35 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const CURRENT_USER_KEY = '@dr_meet_current_user';
 
 export const SupabaseStorageService = {
-  // Check Supabase connection health
+  // Check Supabase connection health with detailed diagnostics
   async checkConnection(): Promise<boolean> {
     try {
-      const { error } = await supabase.from('users').select('id').limit(1);
+      console.log('Checking Supabase connection to:', 'https://fbwlxnfswggnwzdopwlk.supabase.co');
+      
+      // Simple health check without RLS restrictions
+      const { data, error, status } = await supabase
+        .from('users')
+        .select('id', { count: 'exact', head: true })
+        .limit(1);
+
       if (error) {
-        console.error('Supabase connection check failed:', error);
+        console.error('Supabase connection error:', {
+          status,
+          code: error.code,
+          message: error.message,
+          details: error.details,
+        });
         return false;
       }
-      console.log('Supabase connection healthy');
+      
+      console.log('✅ Supabase connection healthy');
       return true;
-    } catch (error) {
-      console.error('Supabase connection error:', error);
+    } catch (error: any) {
+      console.error('Supabase connection exception:', {
+        message: error?.message,
+        name: error?.name,
+        details: error?.details,
+      });
       return false;
     }
   },

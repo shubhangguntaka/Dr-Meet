@@ -43,6 +43,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       // Initialize device info service
       await deviceInfoService.initialize();
+      
+      // Services initialized successfully
+      console.log('App services initialized successfully');
     } catch (error) {
       console.error('Failed to initialize services:', error);
     }
